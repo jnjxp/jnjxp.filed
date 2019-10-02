@@ -1,0 +1,45 @@
+{
+    "name": "jnjxp/filed",
+    "description": "Utilities for serving files",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "jake johns",
+            "email": "jake@jakejohns.net"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "zf": {
+            "config-provider": [
+                "Jnjxp\\Filed\\ConfigProvider"
+            ]
+        }
+    },
+    "require": {
+        "fig/http-message-util": "^1.1",
+        "lmc/http-constants": "^1.0",
+        "psr/container": "^1.0",
+        "psr/http-factory": "^1.0",
+        "psr/http-message": "^1.0",
+        "psr/http-message-implementation": "^1.0"
+    },
+    "require-dev": {
+        "pds/skeleton": "~1.0",
+        "phpunit/phpunit": "^8.0",
+        "zendframework/zend-diactoros": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jnjxp\\Filed\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jnjxp\\Filed\\": "tests/"
+        }
+    }
+}
