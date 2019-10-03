@@ -20,5 +20,7 @@ interface FileResponderInterface
      *
      * @access public
      */
-    public function respondWithFile(SplFileInfo $file, Request $request = null) : Response;
+    public function respondWithFile(SplFileInfo $file = null, Request $request = null) : Response;
+
+    public function fileNotFound() : Response;
 }

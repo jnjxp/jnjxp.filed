@@ -93,9 +93,9 @@ class FileResponder implements FileResponderInterface
      *
      * @access public
      */
-    public function respondWithFile(SplFileInfo $file, Request $request = null) : Response
+    public function respondWithFile(SplFileInfo $file = null, Request $request = null) : Response
     {
-        if (! $file->isFile()) {
+        if (! $file || ! $file->isFile()) {
             return $this->fileNotFound();
         }
 
@@ -116,9 +116,9 @@ class FileResponder implements FileResponderInterface
      *
      * @return Response
      *
-     * @access protected
+     * @access public
      */
-    protected function fileNotFound() : Response
+    public function fileNotFound() : Response
     {
         return $this->responseFactory->createResponse(Code::STATUS_NOT_FOUND);
     }
