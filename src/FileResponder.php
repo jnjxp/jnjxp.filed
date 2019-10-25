@@ -124,6 +124,21 @@ class FileResponder implements FileResponderInterface
     }
 
     /**
+     * Create response
+     *
+     * @param int $code
+     * @param string $reasonPhrase
+     *
+     * @return Response
+     *
+     * @access public
+     */
+    public function createResponse(int $code = 200, string $reasonPhrase = '') : Response
+    {
+        return $this->responseFactory->createResponse($code, $reasonPhrase);
+    }
+
+    /**
      * Add headers to response
      *
      * @param SplFileInfo $file File to respond with
