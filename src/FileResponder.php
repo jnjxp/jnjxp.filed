@@ -6,6 +6,7 @@ namespace Jnjxp\Filed;
 
 use Fig\Http\Message\StatusCodeInterface as Code;
 use Lmc\HttpConstants\Header;
+use Micheh\Cache\CacheUtil;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -36,6 +37,24 @@ class FileResponder implements FileResponderInterface
     protected $streamFactory;
 
     /**
+     * Cache
+     *
+     * @var CacheUtil
+     *
+     * @access protected
+     */
+    protected $cache;
+
+    /**
+     * Should PSR7 CacheUtil be used?
+     *
+     * @var bool
+     *
+     * @access protected
+     */
+    protected $cacheEnabled = true;
+
+    /**
      * Accepts Range header?
      *
      * @var bool
@@ -63,10 +82,14 @@ class FileResponder implements FileResponderInterface
      *
      * @access public
      */
-    public function __construct(ResponseFactory $responseFactory, StreamFactory $streamFactory)
-    {
+    public function __construct(
+        ResponseFactory $responseFactory,
+        StreamFactory $streamFactory,
+        CacheUtil $cache = null
+    ) {
         $this->responseFactory = $responseFactory;
         $this->streamFactory = $streamFactory;
+        $this->cache = $cache;
     }
 
     /**
@@ -81,6 +104,20 @@ class FileResponder implements FileResponderInterface
     public function setCanServeBytes(bool $can) : void
     {
         $this->canServeBytes = $can;
+    }
+
+    /**
+     * Set if CacheUtil should be used
+     *
+     * @param bool $enabled false to disable cache
+     *
+     * @return void
+     *
+     * @access public
+     */
+    public function setCacheEnabled(bool $enabled) : void
+    {
+        $this->cacheEnabled = $enabled;
     }
 
     /**
@@ -102,6 +139,11 @@ class FileResponder implements FileResponderInterface
         $this->response = $this->responseFactory->createResponse();
 
         $this->withHeaders($file);
+
+        if ($this->isNotModified($request)) {
+            return $this->response->withStatus(Code::STATUS_NOT_MODIFIED);
+        }
+
         $this->withBody($file);
 
         if ($request && $this->shouldAddRange($request)) {
@@ -120,7 +162,11 @@ class FileResponder implements FileResponderInterface
      */
     public function fileNotFound() : Response
     {
-        return $this->responseFactory->createResponse(Code::STATUS_NOT_FOUND);
+        $response = $this->responseFactory->createResponse(Code::STATUS_NOT_FOUND);
+        if ($this->isCacheEnabled()) {
+            $response = $this->cache->withCachePrevention($response);
+        }
+        return $response;
     }
 
     /**
@@ -167,6 +213,28 @@ class FileResponder implements FileResponderInterface
         foreach ($headers as $header => $value) {
             $this->response = $this->response->withHeader($header, $value);
         }
+
+        if ($this->isCacheEnabled()) {
+            $etag = $this->generateEtag($file);
+            $this->response = $this->cache->withCache($this->response);
+            $this->response = $this->cache->withETag($this->response, $etag);
+        }
+    }
+
+    /**
+     * generateEtag
+     *
+     * Generates Etag from files MTime and path
+     *
+     * @param SplFileInfo $file file to generate tag for
+     *
+     * @return string
+     *
+     * @access protected
+     */
+    protected function generateEtag(SplFileInfo $file) : string
+    {
+        return md5($file->getMTime() . (string) $file);
     }
 
     /**
@@ -232,6 +300,25 @@ class FileResponder implements FileResponderInterface
     }
 
     /**
+     * Is requests response no modified?
+     *
+     * Is cache enabled and requested file not modified?
+     *
+     * @param Request $request PSR7 Request
+     *
+     * @return bool
+     *
+     * @access protected
+     */
+    protected function isNotModified(Request $request = null) : bool
+    {
+        if ($request && $this->isCacheEnabled()) {
+            return $this->cache->isNotModified($request, $this->response);
+        }
+        return false;
+    }
+
+    /**
      * Can we server bytes to range requests?
      *
      * @return bool
@@ -241,5 +328,20 @@ class FileResponder implements FileResponderInterface
     protected function canServeBytes() : bool
     {
         return $this->canServeBytes;
+    }
+
+    /**
+     * Is cache enabled?
+     *
+     * Should we try and use Cache Util? Returns true if utility is present and
+     * enable flag is set to true.
+     *
+     * @return bool
+     *
+     * @access protected
+     */
+    protected function isCacheEnabled() : bool
+    {
+        return $this->cache && $this->cacheEnabled;
     }
 }

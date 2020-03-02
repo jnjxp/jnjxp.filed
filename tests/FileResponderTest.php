@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Jnjxp\Filed;
 
 use Fig\Http\Message\StatusCodeInterface as Code;
+use Laminas\Diactoros\Response;
+use Laminas\Diactoros\ResponseFactory;
+use Laminas\Diactoros\ServerRequestFactory;
+use Laminas\Diactoros\StreamFactory;
 use Lmc\HttpConstants\Header;
 use PHPUnit\Framework\TestCase;
 use SplFileInfo;
-use Zend\Diactoros\Response;
-use Zend\Diactoros\ServerRequestFactory;
-use Zend\Diactoros\ResponseFactory;
-use Zend\Diactoros\StreamFactory;
 
 class FileResponderTest extends TestCase
 {
@@ -164,5 +164,12 @@ class FileResponderTest extends TestCase
                  )->getHeaders(),
             $response->getHeaders()
         );
+    }
+
+    public function testFactory()
+    {
+        $response = $this->responder->createResponse(Code::STATUS_OK, 'Message');
+        $this->assertEquals($response->getStatusCode(), Code::STATUS_OK);
+        $this->assertEquals($response->getReasonPhrase(), 'Message');
     }
 }
