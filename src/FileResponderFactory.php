@@ -7,6 +7,7 @@ namespace Jnjxp\Filed;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface as ResponseFactory;
 use Psr\Http\Message\StreamFactoryInterface as StreamFactory;
+use Micheh\Cache\CacheUtil;
 
 class FileResponderFactory
 {
@@ -14,7 +15,8 @@ class FileResponderFactory
     {
         return new FileResponder(
             $container->get(ResponseFactory::class),
-            $container->get(StreamFactory::class)
+            $container->get(StreamFactory::class),
+            new CacheUtil()
         );
     }
 }
