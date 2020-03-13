@@ -156,16 +156,26 @@ class FileResponder implements FileResponderInterface
     /**
      * File not found response
      *
+     * @param SplFileInfo $file optional not found body
+     *
      * @return Response
      *
      * @access public
      */
-    public function fileNotFound() : Response
+    public function fileNotFound(SplFileInfo $file = null) : Response
     {
         $response = $this->responseFactory->createResponse(Code::STATUS_NOT_FOUND);
         if ($this->isCacheEnabled()) {
             $response = $this->cache->withCachePrevention($response);
         }
+
+        if ($file && $file->isFile()) {
+            $headers = $this->basicHeaders($file);
+            $this->addHeaders($response, $headers);
+            $body = $this->streamFactory->createStreamFromFile((string) $file);
+            $response = $response->withBody($body);
+        }
+
         return $response;
     }
 
@@ -195,30 +205,56 @@ class FileResponder implements FileResponderInterface
      */
     protected function withHeaders(SplFileInfo $file) : void
     {
-        $headers = [
-            Header::LAST_MODIFIED  => gmdate(self::DATE_FORMAT, $file->getMTime()),
-            Header::CONTENT_LENGTH => (string) $file->getSize()
-        ];
-
-        $mime = mime_content_type((string) $file);
-
-        if ($mime) {
-            $headers[Header::CONTENT_TYPE] = $mime;
-        }
+        $headers = $this->basicHeaders($file);
+        $headers[Header::LAST_MODIFIED]  = gmdate(self::DATE_FORMAT, $file->getMTime());
 
         if ($this->canServeBytes()) {
             $headers[Header::ACCEPT_RANGES]  = 'bytes';
         }
 
-        foreach ($headers as $header => $value) {
-            $this->response = $this->response->withHeader($header, $value);
-        }
+        $this->response = $this->addHeaders($this->response, $headers);
 
         if ($this->isCacheEnabled()) {
             $etag = $this->generateEtag($file);
             $this->response = $this->cache->withCache($this->response);
             $this->response = $this->cache->withETag($this->response, $etag);
         }
+    }
+
+    /**
+     * Generate basic headers for file response, length and type
+     *
+     * @param SplFileInfo $file
+     *
+     * @return array
+     *
+     * @access protected
+     */
+    protected function basicHeaders(SplFileInfo $file) : array
+    {
+        return array_filter([
+            Header::CONTENT_LENGTH => (string) $file->getSize(),
+            Header::CONTENT_TYPE => mime_content_type((string) $file)
+        ]);
+    }
+
+    /**
+     * Add headers to a response
+     *
+     *
+     * @param Response $response
+     * @param array    $headers
+     *
+     * @return Response
+     *
+     * @access protected
+     */
+    protected function addHeaders(Response $response, array $headers) : Response
+    {
+        foreach ($headers as $header => $value) {
+            $response = $response->withHeader($header, $value);
+        }
+        return $response;
     }
 
     /**
