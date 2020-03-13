@@ -171,7 +171,7 @@ class FileResponder implements FileResponderInterface
 
         if ($file && $file->isFile()) {
             $headers = $this->basicHeaders($file);
-            $this->addHeaders($response, $headers);
+            $response = $this->addHeaders($response, $headers);
             $body = $this->streamFactory->createStreamFromFile((string) $file);
             $response = $response->withBody($body);
         }

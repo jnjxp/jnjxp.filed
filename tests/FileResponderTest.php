@@ -62,6 +62,16 @@ class FileResponderTest extends TestCase
             Code::STATUS_NOT_FOUND,
             $response->getStatusCode()
         );
+
+        $headers = [
+            Header::CONTENT_LENGTH => [(string) $this->file->getSize()],
+            Header::CONTENT_TYPE => [mime_content_type((string) $this->file)]
+        ];
+
+        $this->assertEquals(
+            $headers,
+            $response->getHeaders()
+        );
     }
 
     protected function expectedResponse() : Response
