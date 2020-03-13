@@ -55,6 +55,15 @@ class FileResponderTest extends TestCase
         );
     }
 
+    public function testNotFoundExplicit()
+    {
+        $response = $this->responder->fileNotFound($this->file);
+        $this->assertEquals(
+            Code::STATUS_NOT_FOUND,
+            $response->getStatusCode()
+        );
+    }
+
     protected function expectedResponse() : Response
     {
         $response = new Response();

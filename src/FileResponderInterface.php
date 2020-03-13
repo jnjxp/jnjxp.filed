@@ -22,7 +22,7 @@ interface FileResponderInterface
      */
     public function respondWithFile(SplFileInfo $file = null, Request $request = null) : Response;
 
-    public function fileNotFound() : Response;
+    public function fileNotFound(SplFileInfo $file = null) : Response;
 
     public function createResponse(int $code = 200, string $reasonPhrase = '') : Response;
 }
